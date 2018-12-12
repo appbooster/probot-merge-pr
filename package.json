@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "description": "A Probot app to merge PR with proper merge method",
   "author": "Alexandr Subbotin <kelionweb@gmail.com>",
-  "license": "ISC",
-  "repository": "https://github.com//probot-merge-pr.git",
-  "homepage": "https://github.com//probot-merge-pr",
-  "bugs": "https://github.com//probot-merge-pr/issues",
+  "repository": "https://github.com/appbooster/probot-merge-pr.git",
+  "homepage": "https://github.com/appbooster/probot-merge-pr",
+  "bugs": "https://github.com/appbooster/probot-merge-pr/issues",
   "keywords": [
     "probot",
     "github",
