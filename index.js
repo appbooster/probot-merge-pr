@@ -8,73 +8,79 @@ const DEFAULT_CONFIG = {
   },
 }
 
-module.exports = (robot) => {
-  robot.on(
-    ['issue_comment.created', 'issue_comment.edited'],
-    async (context) => {
-      const { github, log } = context
-      const { issue, comment } = context.payload
-      const { pull_request, state } = issue
-      const { user } = comment
-      if (!pull_request || state !== 'open' || user.type !== 'User') {
-        log('Not an opened pull request or comment not from User')
+module.exports = (app) => {
+  app.log('Loaded probot-merge-pr')
 
-        return
-      }
-      const permissions = await github.repos.reviewUserPermissionLevel(
-        context.repo({
-          username: user.login,
-        })
-      )
+  app.on(['issue_comment.created', 'issue_comment.edited'], async (context) => {
+    const { github, log } = context
+    const { issue, comment } = context.payload
+    const { pull_request, state } = issue
+    const { user } = comment
+    log('Handle PR comment')
 
-      const level = permissions.data.permission
-      if (level !== 'admin' && level !== 'write') {
-        log("User doesn't have a permission to merge")
+    if (!pull_request || state !== 'open' || user.type !== 'User') {
+      log('Not an opened pull request or comment not from User')
 
-        return
-      }
+      return
+    }
+    const permissions = await github.repos.reviewUserPermissionLevel(
+      context.repo({
+        username: user.login,
+      })
+    )
 
-      const { command, branch_merge_methods } = await getConfig(
-        context,
-        'merge-pr.yml',
-        DEFAULT_CONFIG
-      )
+    const level = permissions.data.permission
+    if (level !== 'admin' && level !== 'write') {
+      log("User doesn't have a permission to merge")
 
-      if (comment.body !== command) {
-        return
-      }
+      return
+    }
 
-      log('Merge command received')
+    const { command, branch_merge_methods } = await getConfig(
+      context,
+      'merge-pr.yml',
+      DEFAULT_CONFIG
+    )
 
-      const {
-        data: {
-          base: { ref: baseBranch },
-        },
-      } = await github.pullRequests.get(
+    if (comment.body !== command) {
+      log(`Not a merge command (${command})`)
+
+      return
+    }
+
+    log('Merge command received')
+
+    const {
+      data: {
+        base: { ref: baseBranch },
+      },
+    } = await github.pullRequests.get(
+      context.repo({
+        number: issue.number,
+      })
+    )
+
+    const merge_method = branch_merge_methods[baseBranch] || 'squash'
+
+    try {
+      log('Merge pull-request')
+      await github.pullRequests.merge(
         context.repo({
           number: issue.number,
+          merge_method,
         })
       )
+    } catch (err) {
+      log('Error merging PR')
 
-      const merge_method = branch_merge_methods[baseBranch] || 'squash'
-
-      try {
-        await github.pullRequests.merge(
-          context.repo({
-            number: issue.number,
-            merge_method,
+      if (err.code === 405) {
+        const { message } = JSON.parse(err.message)
+        github.issues.createComment(
+          context.issue({
+            body: `Failed to merge PR: ${message}`,
           })
         )
-      } catch (err) {
-        if (err.code === 405) {
-          const { message } = JSON.parse(err.message)
-          github.issues.createComment(
-            context.issue({
-              body: `Failed to merge PR: ${message}`,
-            })
-          )
-        }
       }
     }
-  )
+  })
 }
