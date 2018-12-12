@@ -1,0 +1,41 @@
+{
+  "name": "probot-merge-pr",
+  "version": "1.0.0",
+  "description": "A Probot app to merge PR with proper merge method",
+  "author": "Alexandr Subbotin <kelionweb@gmail.com>",
+  "license": "ISC",
+  "repository": "https://github.com//probot-merge-pr.git",
+  "homepage": "https://github.com//probot-merge-pr",
+  "bugs": "https://github.com//probot-merge-pr/issues",
+  "keywords": [
+    "probot",
+    "github",
+    "probot-app"
+  ],
+  "scripts": {
+    "dev": "nodemon",
+    "start": "probot run ./index.js",
+    "lint": "eslint ./index.js"
+  },
+  "dependencies": {
+    "probot": "^7.2.0",
+    "probot-config": "^1.0.0"
+  },
+  "devDependencies": {
+    "@appbooster/eslint-config-base": "^1.4.0",
+    "eslint": "^5.10.0",
+    "nock": "^10.0.0",
+    "nodemon": "^1.17.2",
+    "smee-client": "^1.0.2"
+  },
+  "engines": {
+    "node": ">= 8.3.0"
+  },
+  "nodemonConfig": {
+    "exec": "npm start",
+    "watch": [
+      ".env",
+      "."
+    ]
+  }
+}
